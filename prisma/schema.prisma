@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model students {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  fullname     String    @db.VarChar(50)
+  class        String    @db.VarChar(50)
+  reg_number   String?   @unique @db.VarChar(250)
+  sex          String?   @db.VarChar(10)
+  img          String?   @db.VarChar(200)
+  addr         String?   @db.VarChar(200)
+  parent_name  String?   @db.VarChar(200)
+  parent_phone String?   @db.VarChar(200)
+  dob          DateTime? @db.Date
+  reg_date     DateTime  @default(now()) @db.Timestamp(0)
+  tc           String?   @db.VarChar(255)
+  pc           String?   @db.VarChar(255)
+  pin          String?   @unique @db.VarChar(255)
+  checked      String?   @db.VarChar(255)
+  pstatus      String?   @db.VarChar(255)
+  result       result[]
+
+  @@map("students")
+}
+
+model result {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  studentId Int      @db.UnsignedInt
+  student   students @relation(fields: [studentId], references: [id])
+  session   String   @db.VarChar(50)
+  term      String   @db.VarChar(20) // 'first', 'second', or 'third'
+  subject   String   @db.VarChar(100)
+  ca1       Float
+  ca2       Float
+  examscore Float
+  total     Float
+  grade     String   @db.VarChar(5)
+  remark    String   @db.VarChar(255)
+
+  // For third term only
+  first_term_total  Float?
+  second_term_total Float?
+  average           Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([session, term])
+  @@map("results")
+}
+
+model staffs {
+  id            Int      @id @default(autoincrement()) @db.UnsignedInt
+  fullname      String   @db.VarChar(100)
+  class         String   @db.VarChar(10) // FT or PT
+  email         String   @unique @db.VarChar(100)
+  sex           String   @db.VarChar(10)
+  img           String?  @db.VarChar(200)
+  addr          String?  @db.VarChar(200)
+  password_hash String   @db.VarChar(255)
+  phone         String   @db.VarChar(20)
+  status        String   @db.VarChar(10) // 'admin', '1', or '0'
+  reg_date      DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("staffs")
+}
+
+model session {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  name      String   @unique @db.VarChar(50) // e.g. '2024/2025'
+  term      String   @db.VarChar(20) // e.g. 'first', 'second', 'third'
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("session")
+}
