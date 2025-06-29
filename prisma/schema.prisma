@@ -73,6 +73,7 @@ model staffs {
   @@map("staffs")
 }
 
+
 model session {
   id        Int      @id @default(autoincrement()) @db.UnsignedInt
   name      String   @unique @db.VarChar(50) // e.g. '2024/2025'

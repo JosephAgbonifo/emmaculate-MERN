@@ -2,6 +2,15 @@ import { PrismaClient } from "../generated/prisma/index.js";
 import generatePin from "../utils/pin/generatePin.js";
 import generateRegNumber from "../utils/regNumber/generate.js";
 import { saveImage } from "../utils/upload/save.js";
+import jsonwebtoken from "jsonwebtoken";
+import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
+import { NODE_ENV } from "../config/env.js";
+import bcrypt from "bcrypt";
+
+const createtoken = (input) => {
+  return jsonwebtoken.sign(input, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+};
+
 const prisma = new PrismaClient();
 
 export const getAllStudents = async (req, res, next) => {
@@ -18,18 +27,58 @@ export const getAllStudents = async (req, res, next) => {
 
 export const getThisStudent = async (req, res, next) => {
   try {
-    const { reg_number } = req.params; // Make sure it's a number
+    const { reg_number, password } = req.body;
+    console.log("Received body:", req.body);
 
-    const student = await prisma.students.findMany({
-      where: {
-        reg_number,
-      },
+    if (!reg_number || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Registration number and password are required",
+      });
+    }
+
+    const student = await prisma.students.findFirst({
+      where: { reg_number },
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    console.log("Found student:", student);
+    console.log("Password provided:", password);
+    const isMatch = await bcrypt.compare(password, student.pin); // assume student.password is hashed
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+
+    const tokenPayload = {
+      fullname: student.fullname,
+      class: student.class,
+      reg_number: student.reg_number,
+      parent_phone: student.parent_phone,
+      role: "student",
+    };
+
+    const token = createtoken(tokenPayload);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
     });
 
     res.status(200).json({
-      reg_number,
       success: true,
-      data: student,
+      token,
+      student,
     });
   } catch (error) {
     next(error);
@@ -91,7 +140,15 @@ export const createStudent = async (req, res, next) => {
 
       const newStudent = await prisma.students.create({ data: values });
 
-      res.status(201).json({ success: true, student: newStudent });
+      if (newStudent) {
+        res.status(201).json({
+          success: true,
+          reg_number: values.reg_number,
+          pin: values.pin,
+        });
+      } else {
+        next(new Error(`Unable to create new student`));
+      }
     }
   } catch (error) {
     next(error);
@@ -127,7 +184,7 @@ export const updateStudent = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: updatedStudent,
+      data: updatedStudent.reg_date,
     });
   } catch (error) {
     next(error);
@@ -150,7 +207,7 @@ export const deleteStudent = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: deletedStudent,
+      data: deletedStudent.reg_number,
     });
   } catch (error) {
     // Handle not found error specifically (optional)

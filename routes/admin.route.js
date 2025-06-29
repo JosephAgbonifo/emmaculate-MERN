@@ -1,18 +1,14 @@
 import { Router } from "express";
-import {
-  getAdminController,
-  getAdminsController,
-} from "../controller/admin.controller.js";
+import { updateSessionController } from "../controller/admin.controller.js";
+import authenticateToken from "../middlewares/auth.middleware.js";
 
 const adminRoute = Router();
 
-adminRoute.get("/", getAdminsController);
+// adminRoute.get("/", getAdminsController);
 
-adminRoute.get("/:id", getAdminController);
+// adminRoute.get("/:id", getAdminController);
 
-adminRoute.post("/session", (req, res) => {
-  res.send({ message: "Get admin session details" });
-});
+adminRoute.post("/session", authenticateToken, updateSessionController);
 
 adminRoute.post("/", (req, res) => {
   res.send({ message: "Register admin route" });

@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { getThisStaff, registerStaff } from "../controller/staff.controller.js";
+import { uploadImage } from "../utils/upload/save.js";
 
 const staffRoute = Router();
 
@@ -6,13 +8,9 @@ staffRoute.get("/", (req, res) => {
   res.send({ message: "Get all staff details" });
 });
 
-staffRoute.post("/", (req, res) => {
-  res.send({ message: "Register staff route" });
-});
+staffRoute.post("/", uploadImage, registerStaff);
 
-staffRoute.get("/:id", (req, res) => {
-  res.send({ message: `details of staff with ID: ${req.params.id}` });
-});
+staffRoute.post("/login", getThisStaff);
 
 staffRoute.put("/:id", (req, res) => {
   res.send({ message: `Update details of staff with ID: ${req.params.id}` });

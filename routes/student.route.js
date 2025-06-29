@@ -7,17 +7,18 @@ import {
   updateStudent,
 } from "../controller/student.controller.js";
 import { uploadImage } from "../utils/upload/save.js";
+import authenticateToken from "../middlewares/auth.middleware.js";
 
 const studentRoute = Router();
 
-studentRoute.get("/", getAllStudents);
+studentRoute.get("/", authenticateToken, getAllStudents);
 
-studentRoute.get("/:reg_number", getThisStudent);
+studentRoute.post("/login", getThisStudent);
 
-studentRoute.post("/", uploadImage, createStudent);
+studentRoute.post("/", uploadImage, authenticateToken, createStudent);
 
-studentRoute.put("/:reg_number", updateStudent);
+studentRoute.put("/:reg_number", authenticateToken, updateStudent);
 
-studentRoute.delete("/:reg_number", deleteStudent);
+studentRoute.delete("/:reg_number", authenticateToken, deleteStudent);
 
 export default studentRoute;
